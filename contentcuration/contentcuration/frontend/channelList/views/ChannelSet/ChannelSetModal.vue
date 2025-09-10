@@ -262,7 +262,6 @@
       isNew() {
         return this.$route.path === '/collections/new';
       },
-
       name: {
         get() {
           return Object.prototype.hasOwnProperty.call(this.diffTracker, 'name')
