@@ -1,54 +1,45 @@
 <template>
 
-  <MessageDialog
+  <KModal
     v-model="dialog"
-    :header="$tr('createTopic')"
+    :title="$tr('createTopic')"
+    :cancelText="$tr('cancel')"
+    :submitText="$tr('create')"
+    @cancel="close"
+    @submit="create"
   >
-    <VForm
-      ref="form"
-      lazy-validation
+    <form
+      novalidate
       @submit.prevent="create"
     >
-      <VTextField
+      <KTextbox
         v-model="title"
-        maxlength="200"
-        counter
+        :maxlength="200"
         :label="$tr('topicTitle')"
-        box
-        :rules="titleRules"
-        required
+        :invalid="!!errors.title"
+        :invalidText="$tr('topicTitleRequired')"
+        showInvalidText
       />
-    </VForm>
-    <template #buttons="{ close }">
-      <VBtn
-        flat
-        data-test="close"
-        @click="close"
-      >
-        {{ $tr('cancel') }}
-      </VBtn>
-      <VBtn
-        color="primary"
-        data-test="create"
-        @click="create"
-      >
-        {{ $tr('create') }}
-      </VBtn>
-    </template>
-  </MessageDialog>
+    </form>
+  </KModal>
 
 </template>
 
 
 <script>
 
-  import MessageDialog from 'shared/views/MessageDialog';
+  import { generateFormMixin } from 'shared/mixins';
+
+  const formMixin = generateFormMixin({
+    title: {
+      required: true,
+      validator: v => v && v.trim().length > 0,
+    },
+  });
 
   export default {
     name: 'NewTopicModal',
-    components: {
-      MessageDialog,
-    },
+    mixins: [formMixin],
     props: {
       value: {
         type: Boolean,
@@ -69,15 +60,21 @@
           this.$emit('input', value);
         },
       },
-      titleRules() {
-        return [v => !!v || this.$tr('topicTitleRequired')];
-      },
     },
     methods: {
       create() {
-        if (this.$refs.form.validate()) {
-          this.$emit('createTopic', this.title);
+        const formData = this.clean();
+        if (!this.validate(formData)) {
+          return;
         }
+        this.$emit('createTopic', formData.title);
+        this.dialog = false;
+        this.resetForm();
+      },
+
+      close() {
+        this.dialog = false;
+        this.resetForm();
       },
     },
     $trs: {
